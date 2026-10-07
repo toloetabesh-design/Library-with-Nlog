@@ -26,7 +26,7 @@ namespace Library.Persistence
                 }
             );
 
-            // Book
+            
             modelBuilder.Entity<Book>().HasData(
                 new Book
                 {
