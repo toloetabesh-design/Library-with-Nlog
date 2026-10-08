@@ -6,27 +6,26 @@ using Microsoft.Extensions.Logging;
 namespace Library.Presentation.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] 
+    [Route("api/[controller]")]
     public class BookController : ControllerBase
     {
         private readonly IBookService _bookService;
         private readonly ILogger<BookController> _logger;
 
-       
         public BookController(IBookService bookService, ILogger<BookController> logger)
         {
             _bookService = bookService;
             _logger = logger;
         }
 
-        
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             try
             {
+                _logger.LogInformation("درخواست دریافت لیست تمام کتاب‌ها.");
                 var books = await _bookService.GetAsync();
-                return Ok(books); 
+                return Ok(books);
             }
             catch (Exception ex)
             {
@@ -35,7 +34,6 @@ namespace Library.Presentation.Controllers
             }
         }
 
-        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -43,7 +41,11 @@ namespace Library.Presentation.Controllers
             {
                 var book = await _bookService.GetByIdAsync(id);
                 if (book == null)
+                {
+                    // استفاده از Warning به جای Error چون این یک خطای سیستمی نیست، بلکه عدم وجود داده است
+                    _logger.LogWarning("کتاب با شناسه {Id} یافت نشد.", id);
                     return NotFound($"کتابی با شناسه {id} یافت نشد.");
+                }
 
                 return Ok(book);
             }
@@ -54,29 +56,31 @@ namespace Library.Presentation.Controllers
             }
         }
 
-        // 3. ایجاد یک کتاب جدید
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] BookDto bookDto)
         {
             try
             {
-                // بررسی اعتبار داده‌های ورودی (Validation)
                 if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("داده‌های ارسالی برای ایجاد کتاب نامعتبر است.");
                     return BadRequest(ModelState);
+                }
 
                 await _bookService.AddAsync(bookDto);
 
-                // بازگشت وضعیت 201 Created و لینک به متد GetById برای مشاهده کتاب ساخته شده
+                // لاگ کردن موفقیت عملیات
+                _logger.LogInformation("کتاب جدید با شناسه {Id} با موفقیت ایجاد شد.", bookDto.Id);
+
                 return CreatedAtAction(nameof(GetById), new { id = bookDto.Id }, bookDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "خطا در ایجاد کتاب جدید");
+                _logger.LogError(ex, "خطا در ایجاد کتاب جدید.");
                 return StatusCode(500, "خطای داخلی سرور");
             }
         }
 
-        // 4. به‌روزرسانی اطلاعات یک کتاب موجود
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] BookDto bookDto)
         {
@@ -85,12 +89,16 @@ namespace Library.Presentation.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                // جلوگیری از به‌روزرسانی کتابی که ID آن با ID موجود در Body متفاوت است
                 if (id != bookDto.Id)
+                {
+                    _logger.LogWarning("تلاش برای آپدیت کتاب با ID نامعتبر. ID در مسیر: {Id}, ID در بدنه: {DtoId}", id, bookDto.Id);
                     return BadRequest("شناسه کتاب در مسیر و بدنه درخواست با هم مطابقت ندارند.");
+                }
 
                 await _bookService.UpdateAsync(bookDto);
-                return NoContent(); // بازگشت وضعیت 204 No Content (موفقیت‌آمیز بدون محتوای بازگشتی)
+
+                _logger.LogInformation("کتاب با شناسه {Id} با موفقیت به‌روزرسانی شد.", id);
+                return NoContent();
             }
             catch (Exception ex)
             {
@@ -99,14 +107,15 @@ namespace Library.Presentation.Controllers
             }
         }
 
-        // 5. حذف یک کتاب
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 await _bookService.DeleteAsync(id);
-                return NoContent(); // بازگشت وضعیت 204
+
+                _logger.LogInformation("کتاب با شناسه {Id} حذف شد.", id);
+                return NoContent();
             }
             catch (Exception ex)
             {
@@ -116,3 +125,4 @@ namespace Library.Presentation.Controllers
         }
     }
 }
+
