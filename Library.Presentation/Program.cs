@@ -10,12 +10,14 @@ using Microsoft.EntityFrameworkCore;
 using NLog;
 using NLog.Web;
 
+// تنظیم NLog
 var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
 
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // تنظیمات Logging برای استفاده از NLog
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
 
@@ -23,15 +25,14 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
+    // Dependency Injection
     builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
     builder.Services.AddScoped<ICategoryService, CategoryService>();
     builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
     builder.Services.AddScoped<IAuthorService, AuthorService>();
 
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(
-            builder.Configuration.GetConnectionString("DefaultConnection")));
-
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
     builder.Services.AddAutoMapper(cfg =>
     {
@@ -44,25 +45,21 @@ try
 
     builder.Services.AddScoped<IMemberRepository, MemberRepository>();
     builder.Services.AddScoped<IMemberService, MemberService>();
-
     builder.Services.AddScoped<IBookRepository, BookRepository>();
     builder.Services.AddScoped<IBorrowingRepository, BorrowingRepository>();
     builder.Services.AddScoped<IBorrowingService, BorrowingService>();
-
     builder.Services.AddScoped<IBookService, BookService>();
 
     var app = builder.Build();
 
-    app.UseSwagger();
-    app.UseSwaggerUI();
-
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
 
     app.UseHttpsRedirection();
-
-
     app.UseAuthorization();
-
-
     app.MapControllers();
 
     app.Run();
