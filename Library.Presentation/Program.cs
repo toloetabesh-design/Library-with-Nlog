@@ -10,14 +10,12 @@ using Microsoft.EntityFrameworkCore;
 using NLog;
 using NLog.Web;
 
-// تنظیم NLog
 var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
 
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // تنظیمات Logging برای استفاده از NLog
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
 
@@ -25,7 +23,6 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
-    // Dependency Injection
     builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
     builder.Services.AddScoped<ICategoryService, CategoryService>();
     builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
