@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace Library.Presentation.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] 
+    [Route("api/[controller]")]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -18,19 +18,19 @@ namespace Library.Presentation.Controllers
             _logger = logger;
         }
 
-        
+        // 1. دریافت تمام دسته‌بندی‌ها
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             try
             {
+                _logger.LogInformation("درخواست دریافت لیست تمام دسته‌بندی‌ها.");
                 var categories = await _categoryService.GetAsync();
-                _logger.LogInformation("");
                 return Ok(categories);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "");
+                _logger.LogError(ex, "خطا در دریافت لیست تمام دسته‌بندی‌ها");
                 return StatusCode(500, "خطای داخلی سرور در دریافت دسته‌بندی‌ها");
             }
         }
@@ -66,20 +66,20 @@ namespace Library.Presentation.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("تلاش برای ایجاد دسته‌بندی نامعتبر با داده‌های: {@Dto}", categoryDto);
+                    _logger.LogWarning("داده‌های ارسالی برای ایجاد دسته‌بندی نامعتبر است.");
                     return BadRequest(ModelState);
                 }
 
                 await _categoryService.AddAsync(categoryDto);
 
-                // ثبت اطلاع از موفقیت عملیات
+                // ثبت اطلاع از موفقیت عملیات با جزئیات نام دسته‌بندی
                 _logger.LogInformation("دسته‌بندی جدید با نام '{CategoryName}' با موفقیت ایجاد شد.", categoryDto.Name);
 
                 return CreatedAtAction(nameof(GetById), new { id = categoryDto.Id }, categoryDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "خطا در ایجاد دسته‌بندی جدید: {Name}", categoryDto.Name);
+                _logger.LogError(ex, "خطا در ایجاد دسته‌بندی جدید با نام: {Name}", categoryDto.Name);
                 return StatusCode(500, "خطای داخلی سرور در ثبت دسته‌بندی");
             }
         }
