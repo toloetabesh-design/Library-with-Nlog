@@ -21,15 +21,18 @@ namespace Library.Presentation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            _logger.LogInformation("خطایی در دریافت لیست نویسندگان رخ داد.");
             try
             {
+                // لاگ کردن شروع عملیات (اختیاری - اگر دیتابیس خیلی شلوغ شد این را حذف کنید)
+                _logger.LogInformation("درخواست دریافت همه نویسندگان.");
+
                 var authors = await _authorService.GetAsync();
                 return Ok(authors);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "خطایی در دریافت لیست نویسندگان رخ داد.");
+                // لاگ کردن خطا (فقط در صورت وقوع خطا)
+                _logger.LogError(ex, "خطا در دریافت لیست نویسندگان.");
                 return StatusCode(500, "خطای داخلی سرور");
             }
         }
@@ -37,12 +40,14 @@ namespace Library.Presentation.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            _logger.LogInformation("خطایی در دریافت لیست نویسندگان رخ داد.");
             try
             {
                 var author = await _authorService.GetByIdAsync(id);
                 if (author == null)
+                {
+                    _logger.LogWarning("نویسنده با شناسه {Id} یافت نشد.", id);
                     return NotFound($"نویسنده‌ای با شناسه {id} یافت نشد.");
+                }
 
                 return Ok(author);
             }
@@ -56,18 +61,22 @@ namespace Library.Presentation.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] AuthorDto authorDto)
         {
-            _logger.LogInformation("خطایی در دریافت لیست نویسندگان رخ داد.");
             try
             {
                 if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("داده‌های ارسالی برای ایجاد نویسنده معتبر نیستند.");
                     return BadRequest(ModelState);
+                }
 
                 await _authorService.AddAsync(authorDto);
+                _logger.LogInformation("نویسنده جدید با شناسه {Id} با موفقیت ایجاد شد.", authorDto.Id);
+
                 return CreatedAtAction(nameof(GetById), new { id = authorDto.Id }, authorDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "خطا در ایجاد نویسنده جدید");
+                _logger.LogError(ex, "خطا در ایجاد نویسنده جدید.");
                 return StatusCode(500, "خطای داخلی سرور");
             }
         }
@@ -75,16 +84,20 @@ namespace Library.Presentation.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] AuthorDto authorDto)
         {
-            _logger.LogInformation("خطایی در دریافت لیست نویسندگان رخ داد.");
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
                 if (id != authorDto.Id)
+                {
+                    _logger.LogWarning("تلاش برای آپدیت نویسنده با ID نامعتبر. ID درخواستی: {Id}, ID در بدنه: {DtoId}", id, authorDto.Id);
                     return BadRequest("ID mismatch");
+                }
 
                 await _authorService.UpdateAsync(authorDto);
+                _logger.LogInformation("نویسنده با شناسه {Id} به‌روزرسانی شد.", id);
+
                 return NoContent();
             }
             catch (Exception ex)
@@ -97,10 +110,10 @@ namespace Library.Presentation.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            _logger.LogInformation("خطایی در دریافت لیست نویسندگان رخ داد.");
             try
             {
                 await _authorService.DeleteAsync(id);
+                _logger.LogInformation("نویسنده با شناسه {Id} حذف شد.", id);
                 return NoContent();
             }
             catch (Exception ex)
@@ -111,3 +124,4 @@ namespace Library.Presentation.Controllers
         }
     }
 }
+
